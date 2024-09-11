@@ -20,7 +20,7 @@ class TtMistralEmbedding(torch.nn.Module):
         self.state_dict = state_dict
         self.device = device
 
-        base_name = "tok_embeddings.weight"
+        base_name = "model.embed_tokens.weight"
         torch_weight = self.state_dict[base_name]
         cache_name = weight_cache_path / base_name
         self.weights = ttnn.as_tensor(
