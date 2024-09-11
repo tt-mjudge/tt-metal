@@ -25,7 +25,7 @@ from models.demos.wormhole.mistral7b.reference.tokenizer import Tokenizer
 class Emb(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.emb = torch.nn.Embedding(32000, 4096)
+        self.emb = torch.nn.Embedding(32768, 4096)
 
     def forward(self, x):
         return self.emb(x)
@@ -126,15 +126,15 @@ def run_mistral_demo(user_input, batch_size, device, instruct_mode, is_ci_env, n
         k: v
         for k, v in state_dict.items()
         if (
-            any([f"layers.{i}." in k for i in range(model_args.n_layers)])
-            or k in ["tok_embeddings.weight", "norm.weight", "output.weight"]
+            any([f"model.layers.{i}." in k for i in range(model_args.n_layers)])
+            or k in ["model.embed_tokens.weight", "model.norm.weight", "lm_head.weight"]
         )
     }
     logger.info("Loading weights finished!")
 
     # TODO Should we keep initial embedding on host?
     embd = Emb()
-    embd.load_state_dict({"emb.weight": state_dict["tok_embeddings.weight"]})
+    embd.load_state_dict({"emb.weight": state_dict["model.embed_tokens.weight"]})
 
     generation_start_pos = 0
     max_generated_tokens = 120
