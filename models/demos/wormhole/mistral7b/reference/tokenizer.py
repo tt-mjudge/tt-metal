@@ -28,40 +28,47 @@ from typing import List
 import torch
 from torch import nn
 
+from mistral_common.tokens.tokenizers.mistral import MistralTokenizer
 from models.experimental.mistral.reference.model import Transformer
 
+class MockModel:
+    pad_id = 1
+    eos_id = 1
 
-class Tokenizer:
+class Tokenizer(MistralTokenizer):
     def __init__(self, model_path: str):
         assert Path(model_path).exists(), model_path
-        self._model = SentencePieceProcessor(model_file=model_path)
-        assert self._model.vocab_size() == self._model.get_piece_size()
+        self._model_tk = self.from_file(model_path).instruct_tokenizer.tokenizer
+        self._model = MockModel()
+        self._model.pad_id = self._model_tk.pad_id
+        self._model.eos_id = self._model_tk.eos_id
+        #assert self._model.vocab_size() == self._model.get_piece_size()
 
     @property
     def n_words(self) -> int:
-        return self._model.vocab_size()
+        return self._model_tk.vocab_size
 
     @property
     def bos_id(self) -> int:
-        return self._model.bos_id()
+        return self._model_tk.bos_id
 
     @property
     def eos_id(self) -> int:
-        return self._model.eos_id()
+        return self._model.eos_id
 
     @property
     def pad_id(self) -> int:
-        return self._model.pad_id()
+        return self._model.pad_id
 
     def encode(self, s: str, bos: bool = True) -> List[int]:
         assert isinstance(s, str)
-        t = self._model.encode(s)
+        t = self._model_tk.encode(s, bos=self.bos_id, eos=self.eos_id)
         if bos:
             t = [self.bos_id, *t]
         return t
 
     def decode(self, t: List[int]) -> str:
-        return self._model.decode(t)
+        return self._model_tk.decode(t)
 
 
 def generate(prompts: List[str], model: Transformer, tokenizer: Tokenizer, max_tokens: int):
