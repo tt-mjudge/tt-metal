@@ -61,6 +61,7 @@ def preprocess_inputs_prefill(input_prompts, tokenizer, model_args, dtype, embd,
 
     if min_prompt_len < 128:
         prefill_seq_len = 0  # For short prompts do decode-as-prefill instead
+        input_tokens_prefill = torch.full((len(input_prompts), prefill_seq_len), tokenizer.pad_id, dtype=torch.int32)
     else:
         prefill_seq_len = (
             1024 if min_prompt_len > 1024 else (512 if min_prompt_len > 512 else 128)
